@@ -1,0 +1,95 @@
+import pygame
+import random
+
+pygame.init()
+
+WIDTH, HEIGHT = 800, 600
+WHITE = (255, 255, 255)
+GREEN = (34, 139, 34)
+BLUE = (0, 0, 255)
+RED = (255, 0, 0)
+BALL_COLOR = (255, 255, 0)
+PLAYER_SIZE = 50
+BALL_SIZE = 20
+VELOCITY = 5
+AI_SPEED = 4
+POWER_SHOT_SPEED = 10
+
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Football Game")
+font = pygame.font.Font(None, 36)
+
+player1_x, player1_y = 100, HEIGHT // 2 - PLAYER_SIZE // 2
+player2_x, player2_y = WIDTH - 150, HEIGHT // 2 - PLAYER_SIZE // 2
+ball_x, ball_y = WIDTH // 2, HEIGHT // 2
+ball_dx, ball_dy = random.choice([-4, 4]), random.choice([-3, 3])
+
+score1, score2 = 0, 0
+
+power_shot = False
+
+clock = pygame.time.Clock()
+running = True
+
+while running:
+    clock.tick(30)
+    screen.fill(GREEN)
+    
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+    
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_w] and player1_y > 0:
+        player1_y -= VELOCITY
+    if keys[pygame.K_s] and player1_y < HEIGHT - PLAYER_SIZE:
+        player1_y += VELOCITY
+    if keys[pygame.K_SPACE]:
+        power_shot = True
+    else:
+        power_shot = False
+
+    if ball_y > player2_y + PLAYER_SIZE // 2:
+        player2_y += AI_SPEED
+    elif ball_y < player2_y + PLAYER_SIZE // 2:
+        player2_y -= AI_SPEED
+    
+    ball_x += ball_dx
+    ball_y += ball_dy
+    
+    if ball_y <= 0 or ball_y >= HEIGHT - BALL_SIZE:
+        ball_dy *= -1
+
+    if (player1_x < ball_x < player1_x + PLAYER_SIZE and player1_y < ball_y < player1_y + PLAYER_SIZE):
+        ball_dx = -ball_dx if not power_shot else -POWER_SHOT_SPEED
+    if (player2_x < ball_x < player2_x + PLAYER_SIZE and player2_y < ball_y < player2_y + PLAYER_SIZE):
+        ball_dx *= -1
+    
+    if ball_x <= 0:
+        score2 += 1
+        ball_x, ball_y = WIDTH // 2, HEIGHT // 2
+        ball_dx, ball_dy = random.choice([-4, 4]), random.choice([-3, 3])
+    elif ball_x >= WIDTH:
+        score1 += 1
+        ball_x, ball_y = WIDTH // 2, HEIGHT // 2
+        ball_dx, ball_dy = random.choice([-4, 4]), random.choice([-3, 3])
+    
+    if score1 == 3 or score2 == 3:
+        winner = "Player 1" if score1 == 3 else "AI"
+        screen.fill(WHITE)
+        text = font.render(f"{winner} Wins!", True, RED)
+        screen.blit(text, (WIDTH // 2 - text.get_width() // 2, HEIGHT // 2 - text.get_height() // 2))
+        pygame.display.flip()
+        pygame.time.delay(3000)
+        running = False
+    
+    pygame.draw.rect(screen, BLUE, (player1_x, player1_y, PLAYER_SIZE, PLAYER_SIZE))
+    pygame.draw.rect(screen, RED, (player2_x, player2_y, PLAYER_SIZE, PLAYER_SIZE))
+    pygame.draw.ellipse(screen, BALL_COLOR, (ball_x, ball_y, BALL_SIZE, BALL_SIZE))
+    
+    score_text = font.render(f"{score1} - {score2}", True, WHITE)
+    screen.blit(score_text, (WIDTH // 2 - score_text.get_width() // 2, 20))
+    
+    pygame.display.flip()
+
+pygame.quit()
